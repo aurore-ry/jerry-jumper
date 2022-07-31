@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { FC, useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { mergeRefs } from "react-merge-refs";
 
 import { LoadedAssets } from "../types";
@@ -27,28 +34,37 @@ export const GameCanvas = React.forwardRef<
   const onUpdate = useCallback(() => {
     let ctx = ctxRef.current;
     if (ctx == null) return undefined;
-    console.log("onUpdate");
+
     return undefined;
   }, []);
 
   // Dessiner les objets selon leurs props a l'ecran
   const render = useCallback(() => {
     let ctx = ctxRef.current;
-    if (ctx == null) return undefined;
-    ctx.clearRect(0, 0, width, height);
+    if (ctx == null || canvasRef.current == null) return undefined;
+
+    const w = canvasRef.current.width;
+    const h = canvasRef.current.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.beginPath();
+
     ctx.fillStyle = "red";
-    ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(assets.background!, 0, 0, width, height);
-    console.log("render");
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.drawImage(assets.background!, 0, 0, w, h);
+
+    ctx.fillStyle = "lime";
+    ctx.fillRect(w - 10, h / 2 - 100 / 2, 10, 100);
+    ctx.fillRect(w / 2 - 100 / 2, h - 10, 100, 10);
+
     return undefined;
-  }, [height, width]);
+  }, [assets.background, height, width]);
 
   const gameloop = useCallback(() => {
-    console.log("----gameloop start");
     onUpdate();
-    console.log("gameloop render");
     render();
-    console.log("----gameloop end");
     animFrameIdRef.current = window.requestAnimationFrame(gameloop);
     return undefined;
   }, [onUpdate, render]);
@@ -67,6 +83,13 @@ export const GameCanvas = React.forwardRef<
     gameloop();
     return undefined;
   }, []);
+
+  useLayoutEffect(() => {
+    if (canvasRef.current != null) {
+      canvasRef.current.height = height;
+      canvasRef.current.width = width;
+    }
+  }, [height, width]);
 
   return (
     <canvas id={"game-canvas"} ref={canvasRef}>

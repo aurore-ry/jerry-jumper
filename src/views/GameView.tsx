@@ -40,7 +40,7 @@ export const GameView: FC<GameViewProps> = ({ assetsByUrl, height, width }) => {
         };
         img.src = imageUrl;
       }),
-    []
+    [setLoadedAssets]
   );
 
   const ctxRef = useRef<null | CanvasRenderingContext2D>(null);
@@ -68,7 +68,17 @@ export const GameView: FC<GameViewProps> = ({ assetsByUrl, height, width }) => {
   }
 
   return (
-    <div id={"game-wrapper"}>
+    <div
+      id={"game-wrapper"}
+      style={{
+        width: "100%",
+        minWidth: "100%",
+        maxWidth: "100%",
+        minHeight: "100vh",
+        height: "100vh",
+        maxHeight: "100vh",
+      }}
+    >
       <GameCanvas
         ref={ctxRef}
         assets={loadedAssets}
