@@ -18,31 +18,53 @@ type GameViewProps = {
 
 const CANVAS_FPS = 60;
 const FISH_SIZE = 85;
-const SPEED_FACTOR_X = 1;
-const SPEED_FACTOR_Y = 2;
+const SPEED_FACTOR_X = 0.8;
+const SPEED_FACTOR_Y = 0.8;
+
+enum KeyCode {
+  LEFT = "ArrowLeft",
+  UP = "ArrowUp",
+  RIGHT = "ArrowRight",
+  DOWN = "ArrowDown",
+}
+
+// Prend les clés dans KeyCode et utilise les pour créer un object tel que
+// clé = keyCode, valeur = pas pressé par défault
+const initialPressedKeys = Object.values(KeyCode).reduce((acc, keyCode) => {
+  acc = {
+    ...acc,
+    [keyCode]: false,
+  };
+  return acc;
+}, {} as { [K in KeyCode]: boolean });
 
 export const GameView: FC<GameViewProps> = ({ assetsByUrl, height, width }) => {
   const [loadingAssets, loadedAssets] = useAssetsLoaders(assetsByUrl);
-  const entities = useRef<Entity[]>([]);
+  console.log("GameView::assets", loadingAssets, loadedAssets);
 
   const ctxRef = useRef<null | CanvasRenderingContext2D>(null);
+  const entities = useRef<Entity[]>([]);
+  const pressedKeys = useRef<{ [K in KeyCode]: boolean }>(initialPressedKeys);
+
+  const loaderStyles = {
+    backgroundImage: `url('${assetsByUrl.background_loading}')`,
+  };
 
   const onFishUpdate = useCallback(
-    (ctx: CanvasRenderingContext2D, dt: number) => {
+    (_: CanvasRenderingContext2D, dt: number) => {
       console.log("onUpdate fish:", dt);
-      if (fishEntity.current.x <= ctx.canvas.width) {
+
+      if (pressedKeys.current[KeyCode.RIGHT] === true) {
         fishEntity.current.x += 1 * SPEED_FACTOR_X;
-      } else {
-        fishEntity.current.x = 10;
+      } else if (pressedKeys.current[KeyCode.LEFT] === true) {
+        fishEntity.current.x -= 1 * SPEED_FACTOR_X;
       }
 
-      if (fishEntity.current.y < 30) {
-        fishEntity.current.y += 0.2 * SPEED_FACTOR_Y;
-      } else {
-        fishEntity.current.y = 10;
+      if (pressedKeys.current[KeyCode.DOWN] === true) {
+        fishEntity.current.y += 1 * SPEED_FACTOR_Y;
+      } else if (pressedKeys.current[KeyCode.UP] === true) {
+        fishEntity.current.y -= 1 * SPEED_FACTOR_Y;
       }
-
-      fishEntity.current.y = Math.max(10, Math.min(fishEntity.current.y, 150));
     },
     []
   );
@@ -85,17 +107,43 @@ export const GameView: FC<GameViewProps> = ({ assetsByUrl, height, width }) => {
   fishEntity.current.onUpdate = onFishUpdate;
   fishEntity.current.render = onFishRender;
 
-  console.log("GameView::assets", loadingAssets, loadedAssets);
+  const onKeyPress = useCallback((ev: KeyboardEvent) => {
+    const keyCode = ev.code;
+    console.log("key press:", keyCode);
+    pressedKeys.current = {
+      ...pressedKeys.current,
+      [keyCode]: true,
+    };
+  }, []);
 
-  const loaderStyles = {
-    backgroundImage: `url('${assetsByUrl.background_loading}')`,
-  };
+  const onKeyRelease = useCallback((ev: KeyboardEvent) => {
+    const keyCode = ev.code;
+    console.log("key release:", keyCode);
+    pressedKeys.current = {
+      ...pressedKeys.current,
+      [keyCode]: false,
+    };
+  }, []);
 
+  // Un effet qui ajoute le fishEntity à la scene une fois
+  // les assets complètement chargés.
   useEffect(() => {
     if (Object.keys(loadedAssets).length === Object.keys(assetsByUrl).length) {
       entities.current = [...entities.current, fishEntity.current];
     }
   }, [assetsByUrl, fishEntity, loadedAssets]);
+
+  // Un effet au mount qui écoute les keyup/keydown
+  useEffect(() => {
+    document.addEventListener("keydown", onKeyPress);
+    document.addEventListener("keyup", onKeyRelease);
+    console.log("keyboard events set");
+    return () => {
+      document.removeEventListener("keydown", onKeyPress);
+      document.removeEventListener("keyup", onKeyRelease);
+      console.log("keyboard events unset");
+    };
+  }, [onKeyPress, onKeyRelease]);
 
   if (loadingAssets) {
     return (

@@ -19,13 +19,6 @@ type GameCanvasProps = {
   height: number;
 };
 
-const key_code_ctx = {
-  LEFT: 37,
-  UP: 38,
-  RIGHT: 39,
-  DOWN: 40,
-};
-
 export const GameCanvas = React.forwardRef<
   null | CanvasRenderingContext2D,
   GameCanvasProps

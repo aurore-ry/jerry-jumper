@@ -1,10 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { GameView } from "./views";
 import { assetsByUrl } from "./assets";
-
-const DESIRED_FPS = 60;
-const FPS = DESIRED_FPS / 100;
 
 export function App() {
   const [gameSize, setGameSize] = useState<{ width: number; height: number }>({
@@ -12,18 +9,7 @@ export function App() {
     height: window.innerHeight,
   });
 
-  let onWindowResizeLastCalledAtEpoch = useRef<null | number>(null);
-
   const onWindowResize = useCallback(() => {
-    // const now = Date.now().valueOf();
-    // if (
-    //   onWindowResizeLastCalledAtEpoch.current != null &&
-    //   now - onWindowResizeLastCalledAtEpoch.current <= FPS * 1000
-    // ) {
-    //   return undefined;
-    // }
-
-    // onWindowResizeLastCalledAtEpoch.current = now;
     const width = window.innerWidth;
     const height = window.innerHeight;
     setGameSize({ height, width });
@@ -35,7 +21,7 @@ export function App() {
     return () => {
       window.removeEventListener("resize", onWindowResize, true);
     };
-  }, []);
+  }, [onWindowResize]);
 
   useEffect(() => {
     onWindowResize();
